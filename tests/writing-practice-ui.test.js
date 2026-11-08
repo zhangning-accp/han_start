@@ -6,6 +6,15 @@ import {villageHTML} from '../public/onboarding-ui.js';
 import {migrateOnboarding} from '../public/onboarding.js';
 import {writingTemplates} from '../public/writing-data.js';
 const ctx={V:key=>villageText(key,'en')};
+test('each writing target offers an accessible single-character audio button without submitting the lesson',()=>{
+ for(const [lesson,character] of Object.entries({hello:'你',tea:'茶',water:'水',sit:'坐',thanks:'谢'})){
+  for(const language of ['zh','en','vi','id','pt-BR']){
+   const html=writingPracticeHTML({V:key=>villageText(key,language)},lesson);
+   assert.match(html,new RegExp(`<button[^>]*type="button"[^>]*data-audio="character-${lesson}"[^>]*data-speed="1"[^>]*aria-label="[^"<>]+ · ${character}"`));
+   assert.match(html,/id="writing-audio-status"[^>]*role="status"/);
+  }
+ }
+});
 test('every beginner writing exercise is visible immediately and cannot be collapsed',()=>{
  const s=migrateOnboarding({step:0});
  for(const step of [1,2,4,5]){

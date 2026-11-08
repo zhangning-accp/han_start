@@ -7,6 +7,17 @@ function fixture(){
  const player=createPhraseAudio({createAudio:src=>{const clip={src,paused:false,currentTime:0,play:async()=>{},pause(){this.paused=true;}};clips.push(clip);return clip;},onStatus:s=>statuses.push(s),onPlay:(...args)=>plays.push(args)});
  return {player,clips,statuses,plays};
 }
+test('writing audio plays a dedicated character clip and shares cancellation with sentence audio',async()=>{
+ const {player,clips,statuses}=fixture();
+ for(const lesson of ['hello','tea','water','sit','thanks']){
+  assert.equal(await player.play('character-'+lesson),true);
+  assert.equal(clips.at(-1).src,`/audio/character-${lesson}.wav`);
+ }
+ const last=clips.at(-1);await player.play('hello');assert.equal(last.paused,true);
+ await player.play('character-hello');assert.equal(clips.at(-2).paused,true);
+ clips.at(-1).onerror();assert.equal(statuses.at(-1),'error');
+ assert.equal(await player.play('character-missing'),false);
+});
 test('replay starts a fresh clip, stops previous audio and supports slow listening',async()=>{
  const {player,clips,statuses,plays}=fixture();
  assert.equal(await player.play('tea',1),true);assert.equal(clips[0].src,'/audio/tea.wav');assert.equal(clips[0].playbackRate,1);

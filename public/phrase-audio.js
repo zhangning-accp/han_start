@@ -1,4 +1,4 @@
-const phrases=new Set(['hello','tea','water','sit','thanks']);
+const phrases=new Set(['hello','tea','water','sit','thanks','character-hello','character-tea','character-water','character-sit','character-thanks']);
 export function createPhraseAudio({createAudio=src=>new Audio(src),onStatus=()=>{},onPlay=()=>{}}={}){
  let current=null;
  function stop(){
@@ -7,18 +7,18 @@ export function createPhraseAudio({createAudio=src=>new Audio(src),onStatus=()=>
  }
  async function play(id,speed=1){
   stop();
-  if(!phrases.has(id)||![1,0.75].includes(speed)){onStatus('error');return false;}
+  if(!phrases.has(id)||![1,0.75].includes(speed)){onStatus('error',id);return false;}
   let clip;
   try{
    clip=createAudio(`/audio/${id}.wav`);current=clip;
    clip.playbackRate=speed;clip.preservesPitch=true;
    clip.onended=()=>{if(current===clip){current=null;onStatus('idle');}};
-   clip.onerror=()=>{if(current===clip){stop();onStatus('error');}};
-   onStatus('loading');await clip.play();
+   clip.onerror=()=>{if(current===clip){stop();onStatus('error',id);}};
+   onStatus('loading',id);await clip.play();
    if(current!==clip)return false;
-   onStatus('playing');onPlay(id,speed);return true;
+   onStatus('playing',id);onPlay(id,speed);return true;
   }catch{
-   if(current===clip){stop();onStatus('error');}
+   if(current===clip){stop();onStatus('error',id);}
    return false;
   }
  }

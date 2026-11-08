@@ -1,0 +1,12 @@
+Single-character Mandarin audio, generated 2026-11-08.
+Source: installed Windows System.Speech voice Microsoft Huihui Desktop (zh-CN), rate -2.
+These are synthesized single-character clips, not human recordings or cropped sentence audio.
+
+character-hello.wav: 你 (nǐ)
+character-tea.wav: 茶 (chá)
+character-water.wav: 水 (shuǐ)
+character-sit.wav: 坐 (zuò)
+character-thanks.wav: 谢 (xiè)
+
+Played through the shared phrase audio player. Playback is user initiated;
+replay, sentence playback, page navigation and hiding the page stop the previous clip.

@@ -35,8 +35,10 @@ const trialContext=()=>({T,esc,language:state.language});
 const correctionDrafts=new Map();
 const R=(key,original,displayed)=>correctableHTML({key,original,displayed,language:state.language,scene:state.onboarding.chapter==='village'?'village:'+state.onboarding.step:'market:'+(current()?.id||'complete'),mode:state.onboarding.mode});
 const context=()=>({V,esc,R});
-const phraseAudio=createPhraseAudio({onStatus:status=>{
- const node=$('#audio-status');if(node)node.textContent=V(({idle:'repeatHint',loading:'audioLoading',playing:'playing',error:'audioError'})[status]);
+const phraseAudio=createPhraseAudio({onStatus:(status,id)=>{
+ const character=id?.startsWith('character-'),message=V(({idle:'repeatHint',loading:'audioLoading',playing:'playing',error:'audioError'})[status]);
+ const node=$('#audio-status');if(node)node.textContent=character?V('repeatHint'):message;
+ const writing=$('#writing-audio-status');if(writing)writing.textContent=character?message:'';
  const stop=$('#stop-audio');if(stop)stop.hidden=!['loading','playing'].includes(status);
 },onPlay:(id,speed)=>log(speed===1?'audio_listen':'audio_slow',id)});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)phraseAudio.stop();});

@@ -19,7 +19,7 @@ test('handwriting modules, data and license are served locally, without exposing
  assert.equal((await fetch(`${base}/handwriting-data/private.json`)).status,404);
 });
 test('Mandarin phrase clips are served locally with an audio MIME type',async()=>{
- for(const id of ['hello','tea','water','sit','thanks']){
+ for(const id of ['hello','tea','water','sit','thanks','character-hello','character-tea','character-water','character-sit','character-thanks']){
   const r=await fetch(`${base}/audio/${id}.wav`);assert.equal(r.status,200,id);assert.equal(r.headers.get('content-type'),'audio/wav');
   const wav=Buffer.from(await r.arrayBuffer());assert.equal(wav.toString('ascii',0,4),'RIFF');assert.equal(wav.toString('ascii',8,12),'WAVE');assert.ok(wav.length>4000);
  }
