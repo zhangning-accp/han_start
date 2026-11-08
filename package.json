@@ -1,0 +1,19 @@
+{
+  "name": "han-start",
+  "version": "0.4.8",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/server.js",
+    "test": "node --test",
+    "moderate": "node src/moderate.js",
+    "admin": "node --env-file-if-exists=.env src/admin.js",
+    "backup": "node --env-file-if-exists=.env src/backup.js"
+  },
+  "dependencies": {
+    "maxmind": "5.0.8"
+  }
+}

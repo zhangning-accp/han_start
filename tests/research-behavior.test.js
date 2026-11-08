@@ -1,0 +1,44 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {bindResearch} from '../public/research-ui.js';
+import {openDatabase} from '../src/database.js';
+import {openIdentity} from '../src/identity.js';
+import {saveSurvey,personalResearch,configureOffer,respondToOffer,publicOffers} from '../src/research.js';
+import {removeTrialUser} from '../src/trial.js';
+const tick=()=>new Promise(resolve=>setImmediate(resolve));
+test('survey retries preserve draft and request ID, block double submits and clear contact on opt-out',async()=>{
+ const fields=Object.fromEntries(Object.entries({goal:'travel',currentTool:'Books',reason:'difficult',note:'My feedback',contact:'qa@example.test'}).map(([k,value])=>[k,{value}]));fields.interviewConsent={checked:true};
+ const status={},button={},draft={},calls=[];let reject,saved;
+ const form={elements:fields,querySelector:s=>s==='[data-research-status]'?status:null,querySelectorAll:()=>[button]};
+ const root={querySelector:()=>form,querySelectorAll:()=>[]};
+ bindResearch(root,{research:{revision:0},draft,api:async(p,m,b)=>{calls.push(structuredClone(b));if(calls.length===1)return new Promise((_,r)=>reject=r);return {revision:1};},onSaved:r=>saved=r});
+ form.onsubmit({preventDefault(){}});form.onsubmit({preventDefault(){}});assert.equal(calls.length,1);assert.equal(button.disabled,true);
+ reject(Error('offline'));await tick();assert.equal(draft.note,'My feedback');assert.equal(fields.contact.value,'qa@example.test');assert.equal(button.disabled,false);
+ form.onsubmit({preventDefault(){}});await tick();assert.equal(calls[0].requestId,calls[1].requestId);assert.equal(saved.revision,1);
+ fields.interviewConsent.checked=false;form.onchange();assert.equal(fields.contact.value,'');assert.equal(draft.contact,'');assert.equal(fields.contact.disabled,true);
+});
+test('proposal exposure requires opening, failed requests can retry without losing the answer',async()=>{
+ const status={},reason={value:'Need more scenes'},retry={},buttons=['interested','declined'].map(choice=>({dataset:{choice},disabled:true}));
+ const detail={dataset:{offer:'offer-one'},open:false,querySelector:s=>s==='[data-offer-status]'?status:s==='[data-offer-reason]'?reason:retry,querySelectorAll:()=>buttons};
+ const calls=[];let fail=true;
+ bindResearch({querySelector:()=>null,querySelectorAll:()=>[detail]},{research:{},draft:{},api:async(p,m,b)=>{calls.push(b);if(fail)throw Error('offline');}});
+ detail.ontoggle();await tick();assert.equal(calls.length,0);
+ detail.open=true;detail.ontoggle();await tick();assert.equal(buttons[0].disabled,true);
+ fail=false;retry.onclick();await tick();assert.equal(buttons[0].disabled,false);
+ fail=true;await buttons[0].onclick();assert.equal(reason.value,'Need more scenes');assert.equal(buttons[0].disabled,false);
+ fail=false;await buttons[0].onclick();assert.equal(calls.at(-1).action,'interested');assert.match(status.textContent,/Saved/);
+});
+test('research and immutable quotes survive reopening SQLite; invalid writes roll back and deletion preserves other visitors',()=>{
+ const directory=fs.mkdtempSync(path.join(os.tmpdir(),'han-research-store-')),initial=()=>({schema:1,version:1,history:[],contributions:[],events:[]});
+ const db=openDatabase(directory,initial),a=db.update(s=>openIdentity(s,null,null).identity),b=db.update(s=>openIdentity(s,null,null).identity);
+ db.update(s=>saveSurvey(s,a.id,{requestId:randomUUID(),revision:0,goal:'travel',currentTool:'Books',reason:'enjoyed',note:'Useful',interviewConsent:true,contact:'qa@example.test'}));
+ db.update(s=>configureOffer(s,{category:'learning',revision:0,enabled:true,title:'Lessons',benefits:'Daily scenes',amountMinor:500,currency:'USD',interval:'month'}));
+ const offer=publicOffers(db.read())[0];db.update(s=>respondToOffer(s,a.id,{offerId:offer.id,action:'viewed'}));
+ const reopened=openDatabase(directory,initial);assert.equal(personalResearch(reopened.read(),a.id).interview.contact,'qa@example.test');assert.equal(publicOffers(reopened.read())[0].id,offer.id);
+ assert.throws(()=>reopened.update(s=>configureOffer(s,{category:'learning',revision:1,enabled:true,amountMinor:-1})),/invalid_research/);assert.equal(publicOffers(reopened.read())[0].id,offer.id);
+ reopened.update(s=>removeTrialUser(s,a.id));assert.equal(db.read().identities.length,1);assert.equal(db.read().identities[0].id,b.id);assert.equal(JSON.stringify(db.read()).includes('qa@example.test'),false);
+});

@@ -1,0 +1,3 @@
+Derived from hanzi-writer-data 2.0.1 (https://www.npmjs.com/package/hanzi-writer-data), sourced from Make Me a Hanzi graphics.txt (https://github.com/skishore/makemeahanzi). Original fonts: Arphic PL KaitiM GB and Arphic PL UKai. Copyright (C) 1999 Arphic Technology Co., Ltd. Arphic Public License, see ARPHICPL.txt. Modified by han_start on 2026-11-07: retain character and median coordinates only; convert y to 900-y; serialize character/strokes pairs. Modifications are available under the same license. No warranty.
+
+Guided practice derivative (2026-11-07): public/writing-data.js selects 你、茶、水、坐、谢 and scales median coordinates to fit a 300px pad. Same Arphic Public License.

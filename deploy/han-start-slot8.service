@@ -1,0 +1,21 @@
+[Unit]
+Description=Han Start test slot 8
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/stu60/project8
+Environment=PORT=0
+Environment=HAN_PORT_FILE=/home/stu60/.service_port8
+Environment=HAN_DATA_DIR=/home/stu60/project8/data
+Environment=HAN_PUBLIC_ORIGIN=https://stu60-8.space.aiec.wflaiedu.com
+Environment=HAN_SECURE_COOKIE=1
+UMask=0077
+ExecStartPre=/usr/bin/truncate -s 0 /home/stu60/.service_port8
+ExecStart=/home/stu60/.nvm/versions/node/v24.21.0/bin/node src/server.js
+ExecStartPost=/home/stu60/sync-port8.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

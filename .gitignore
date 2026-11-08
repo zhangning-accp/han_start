@@ -1,0 +1,5 @@
+.env
+data/
+node_modules/
+*.log
+/学生部署提示词模板.md
